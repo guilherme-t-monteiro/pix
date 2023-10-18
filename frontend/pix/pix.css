@@ -1,0 +1,13 @@
+.container-pix {
+   width: 50%;
+   margin-top: 200px;
+   margin-left: auto;
+   margin-right: auto;
+   background-color: rgb(214, 214, 214);
+   padding: 40px;
+   border-radius: 10px;
+}
+
+.btn-voltar {
+   margin-bottom: 20px;
+}
