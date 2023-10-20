@@ -1,22 +1,31 @@
 let corpoTabela = document.getElementById('corpo-tabela');
 let formConsulta = document.getElementById('form-pix');
-let inputRemetente = document.getElementById('input-remetente');
+let inputUsuario = document.getElementById('input-usuario');
 let radioRecebido = document.getElementById('radio-recebido');
 let radioEnviado = document.getElementById('radio-enviado');
+let botaoExibirTodos = document.getElementById('botao-exibir-todos');
 
+preencherSelect();
 buscarDados();
+
+botaoExibirTodos.addEventListener('click', (event) => {
+   buscarDados();
+   inputUsuario.value = 'Usuário';
+   radioEnviado.checked = false;
+   radioRecebido.checked = false;
+});
 
 formConsulta.addEventListener('submit', (event) => {
    event.preventDefault();
    event.stopPropagation();
 
-   let id = inputRemetente.value;
+   let id = inputUsuario.value;
 
    let tipo;
 
    if (radioRecebido.checked) {
       tipo = radioRecebido.value;
-   } else {
+   } else if (radioEnviado.checked) {
       tipo = radioEnviado.value;
    }
 
@@ -39,10 +48,8 @@ async function buscarDados (consulta) {
    let resposta = await fetch(url);
    let dados = await resposta.json();
 
-   if (consulta && resposta.ok) {
-      while (corpoTabela.firstChild) {
-         corpoTabela.removeChild(corpoTabela.firstChild);
-      }
+   while (corpoTabela.firstChild) {
+      corpoTabela.removeChild(corpoTabela.firstChild);
    }
    
    for (pix of dados) {
@@ -63,12 +70,51 @@ async function buscarDados (consulta) {
       destinatario.innerText = pix.sender.name;
       tr.appendChild(destinatario);
       
-      data.innerText = pix.createdAt;
+      let dataHora = formatarDataHora(pix.createdAt)
+      data.innerText = dataHora;
       tr.appendChild(data);
       
-      valor.innerText = pix.value;
+      let numero = parseFloat(pix.value);
+      let formatoMoeda = numero.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+      valor.innerText = formatoMoeda;
       tr.appendChild(valor);
 
       corpoTabela.appendChild(tr);
    }
+}
+
+async function preencherSelect () {
+   let resposta = await fetch('http://localhost:3000/users');
+   let usuarios = await resposta.json();
+
+   for ( usuario of usuarios ) {
+      let opcao = document.createElement('option');
+      opcao.value = usuario.id;
+      opcao.innerText = usuario.name;
+
+      inputUsuario.appendChild(opcao);
+   }
+}
+
+function formatarDataHora (data) {
+   let dataBrt = new Date(data);
+
+   dataBrt.setTime(dataBrt.getTime() - 3 * 60 * 60 * 1000);
+
+   let options = {
+   day: '2-digit',
+   month: '2-digit',
+   year: 'numeric',
+   hour: '2-digit',
+   minute: '2-digit',
+   timeZoneName: 'short',
+   timeZone: 'America/Sao_Paulo',
+   };
+
+   let formatter = new Intl.DateTimeFormat('pt-BR', options);
+
+   let dataFormatada = formatter.format(dataBrt);
+   dataFormatada = dataFormatada.replace(' BRT', '');
+   dataFormatada = dataFormatada.replace(',', ' -');
+   return dataFormatada;
 }
